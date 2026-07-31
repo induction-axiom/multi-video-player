@@ -7,7 +7,7 @@ const templateRoot = new URL("../", import.meta.url);
 
 async function loadLayoutModule() {
   const source = await readFile(
-    new URL("../app/video-layout.ts", import.meta.url),
+    new URL("../algorithm/video-layout.ts", import.meta.url),
     "utf8",
   );
   const javascript = ts.transpileModule(source, {

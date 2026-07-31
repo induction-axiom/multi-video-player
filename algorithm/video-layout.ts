@@ -1,3 +1,20 @@
+/**
+ * Ordered video-wall layout
+ *
+ * Given videos in a fixed order and a rectangular screen, split the videos
+ * into rows and maximize the visible video area. Every video keeps its aspect
+ * ratio, stays inside the screen, and is never cropped.
+ *
+ * The row partition uses dynamic programming:
+ *   state:   cost[rowCount][videoCount]
+ *   choice:  where the last row starts
+ *
+ * The current version recomputes aspect-ratio sums inside each transition, so
+ * one partition is O(r * n³). A prefix-sum array is the clearest first
+ * optimization: it reduces each range sum to O(1), making the DP O(r * n²).
+ * Fullscreen mode tests a small set of row counts around the estimated best.
+ */
+
 export type VideoLayoutInput = {
   id: string;
   width: number;

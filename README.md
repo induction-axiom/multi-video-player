@@ -41,4 +41,17 @@ npm test
 npm run lint
 ```
 
+## Improve the layout algorithm
+
+Edit [`algorithm/video-layout.ts`](algorithm/video-layout.ts), then compare the
+results before and after your change:
+
+```bash
+npm run test:layout
+npm run benchmark:fill
+```
+
+`P05 fill` and `worst fill` should go up; `P95 black` should go down. The
+benchmark generates 5,000 repeatable aspect-ratio combinations by default.
+
 MIT licensed.

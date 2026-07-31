@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { computeVideoLayout } from "./video-layout";
+import { computeVideoLayout } from "../algorithm/video-layout";
 
 type Loudness = {
   rmsDb: number;

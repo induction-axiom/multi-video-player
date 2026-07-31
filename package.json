@@ -16,7 +16,10 @@
     "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
     "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
-    "test": "npm run build && node --test tests/player.test.mjs",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "test:layout": "node --test tests/layout-algorithm.test.mjs",
+    "benchmark:layout": "node benchmarks/layout-benchmark.mjs",
+    "benchmark:fill": "node benchmarks/fill-rate-benchmark.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
   },
   "dependencies": {
