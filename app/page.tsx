@@ -355,17 +355,20 @@ export default function Home() {
   }, [isPlaying, items.length, syncVideos]);
 
   useEffect(() => {
-    if (!isGridFullscreen) return;
-
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code !== "Space" || event.repeat) return;
+      const target = event.target;
+      const isInteractive =
+        target instanceof HTMLElement &&
+        Boolean(target.closest("button, input, select, textarea"));
+      if (event.code !== "Space" || event.repeat || isInteractive) return;
+
       event.preventDefault();
       void togglePlayback();
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isGridFullscreen, togglePlayback]);
+  }, [togglePlayback]);
 
   const seek = (time: number) => {
     const nextTime = Math.max(0, Math.min(time, maxDuration));
