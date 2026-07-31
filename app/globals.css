@@ -193,6 +193,13 @@ footer p {
   font-weight: 700;
 }
 
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
 .secondary-button:hover,
 .icon-button:hover {
   border-color: rgba(215, 255, 63, 0.35);
@@ -240,6 +247,20 @@ input[type="range"] {
   color: #b5beba;
 }
 
+.ui-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.volume-icon {
+  overflow: visible;
+}
+
 .master-volume input {
   width: 86px;
 }
@@ -251,8 +272,14 @@ input[type="range"] {
 
 .icon-button {
   width: 42px;
+  display: grid;
+  place-items: center;
   padding: 0;
-  font-size: 19px;
+}
+
+.icon-button .ui-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .status-line {
@@ -349,6 +376,11 @@ input[type="range"] {
   left: 34px;
   z-index: 2;
   background: #252c28;
+}
+
+.drop-visual .ui-icon {
+  width: 22px;
+  height: 22px;
 }
 
 .drop-zone h2 {
@@ -502,12 +534,18 @@ input[type="range"] {
   right: 9px;
   width: 30px;
   height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
   border-radius: 9px;
   background: rgba(6, 8, 7, 0.74);
   color: #bcc4c0;
-  font-size: 20px;
-  line-height: 1;
   backdrop-filter: blur(8px);
+}
+
+.remove-button .ui-icon {
+  width: 17px;
+  height: 17px;
 }
 
 .remove-button:hover {
@@ -579,8 +617,15 @@ input[type="range"] {
 .size-controls button {
   width: 27px;
   height: 25px;
+  display: grid;
+  place-items: center;
+  padding: 0;
   border-radius: 7px;
-  font-size: 14px;
+}
+
+.size-controls .ui-icon {
+  width: 14px;
+  height: 14px;
 }
 
 .size-controls strong {
@@ -611,6 +656,14 @@ input[type="range"] {
 .mute-button {
   width: 28px;
   height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.mute-button .volume-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .mute-button.active {
@@ -640,9 +693,10 @@ input[type="range"] {
   color: var(--ink);
 }
 
-.add-card span {
+.add-card .ui-icon {
+  width: 28px;
+  height: 28px;
   color: var(--acid);
-  font-size: 28px;
 }
 
 footer {

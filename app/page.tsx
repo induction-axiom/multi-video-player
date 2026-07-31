@@ -3,6 +3,7 @@
 import {
   ChangeEvent,
   DragEvent,
+  ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -44,6 +45,107 @@ const formatTime = (seconds: number) => {
 
 const db = (value: number) => 20 * Math.log10(Math.max(value, 1e-9));
 
+const IconFrame = ({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) => (
+  <svg
+    aria-hidden="true"
+    className={`ui-icon ${className}`.trim()}
+    viewBox="0 0 24 24"
+    fill="none"
+  >
+    {children}
+  </svg>
+);
+
+const PlayIcon = () => (
+  <IconFrame>
+    <path d="m8 5 11 7-11 7V5Z" fill="currentColor" stroke="none" />
+  </IconFrame>
+);
+
+const PauseIcon = () => (
+  <IconFrame>
+    <path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor" stroke="none" />
+  </IconFrame>
+);
+
+const PlusIcon = () => (
+  <IconFrame>
+    <path d="M12 5v14M5 12h14" />
+  </IconFrame>
+);
+
+const MinusIcon = () => (
+  <IconFrame>
+    <path d="M5 12h14" />
+  </IconFrame>
+);
+
+const VideoPlusIcon = () => (
+  <IconFrame>
+    <rect x="3.5" y="6" width="12.5" height="12" rx="2" />
+    <path d="m16 10 4.5-2.5v9L16 14M9.75 9v6M6.75 12h6" />
+  </IconFrame>
+);
+
+const EqualizerIcon = () => (
+  <IconFrame>
+    <path d="M4 6h5M15 6h5M4 12h9M17 12h3M4 18h2M10 18h10" />
+    <circle cx="12" cy="6" r="2" />
+    <circle cx="15" cy="12" r="2" />
+    <circle cx="8" cy="18" r="2" />
+  </IconFrame>
+);
+
+const ExpandIcon = () => (
+  <IconFrame>
+    <path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5" />
+  </IconFrame>
+);
+
+const CollapseIcon = () => (
+  <IconFrame>
+    <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+  </IconFrame>
+);
+
+const CloseIcon = () => (
+  <IconFrame>
+    <path d="m7 7 10 10M17 7 7 17" />
+  </IconFrame>
+);
+
+const VolumeIcon = ({
+  muted,
+  level = 1,
+}: {
+  muted: boolean;
+  level?: number;
+}) => (
+  <IconFrame className="volume-icon">
+    <path
+      d="M11 5 6.75 8.5H4v7h2.75L11 19V5Z"
+      fill="currentColor"
+    />
+    {muted ? (
+      <>
+        <path d="m15.5 9.5 4 5" />
+        <path d="m19.5 9.5-4 5" />
+      </>
+    ) : (
+      <>
+        {level > 0 && <path d="M14.5 9.25a4 4 0 0 1 0 5.5" />}
+        {level > 0.5 && <path d="M17.5 6.75a7.5 7.5 0 0 1 0 10.5" />}
+      </>
+    )}
+  </IconFrame>
+);
+
 export default function Home() {
   const [items, setItems] = useState<VideoItem[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -73,7 +175,7 @@ export default function Home() {
         gridSize.width || 1200,
         gridSize.height || 800,
         isGridFullscreen,
-    ),
+      ),
     [gridSize.height, gridSize.width, isGridFullscreen, items],
   );
   const layoutStructure = useMemo(
@@ -403,7 +505,13 @@ export default function Home() {
       <section className="control-deck" aria-label="Player controls">
         <div className="transport">
           <button className="primary-button" onClick={togglePlayback}>
-            <span aria-hidden>{isPlaying ? "Ⅱ" : "▶"}</span>
+            {isPlaying ? (
+              <PauseIcon />
+            ) : items.length ? (
+              <PlayIcon />
+            ) : (
+              <VideoPlusIcon />
+            )}
             {isPlaying
               ? "Pause all"
               : items.length
@@ -414,14 +522,16 @@ export default function Home() {
             className="secondary-button"
             onClick={() => fileInputRef.current?.click()}
           >
-            ＋ Add videos
+            <PlusIcon />
+            Add videos
           </button>
           <button
             className="secondary-button"
             onClick={balanceAudio}
             disabled={!items.length || isBalancing}
           >
-            ◫ {isBalancing ? "Analyzing…" : "Balance audio"}
+            <EqualizerIcon />
+            {isBalancing ? "Analyzing…" : "Balance audio"}
           </button>
         </div>
 
@@ -446,7 +556,7 @@ export default function Home() {
 
         <div className="master-controls">
           <label className="master-volume">
-            <span aria-hidden>{masterVolume === 0 ? "×" : "◖"}</span>
+            <VolumeIcon muted={masterVolume === 0} level={masterVolume} />
             <input
               aria-label="Master volume"
               type="range"
@@ -468,7 +578,7 @@ export default function Home() {
                 : "Open the smart layout in fullscreen"
             }
           >
-            ⛶
+            {isGridFullscreen ? <CollapseIcon /> : <ExpandIcon />}
           </button>
           <button
             className="danger-button"
@@ -509,16 +619,19 @@ export default function Home() {
           onClick={() => fileInputRef.current?.click()}
         >
           <div className="drop-visual">
-            <span>▶</span>
-            <span>▶</span>
-            <span>▶</span>
+            <span><PlayIcon /></span>
+            <span><PlayIcon /></span>
+            <span><PlayIcon /></span>
           </div>
           <h2>Drop videos here</h2>
           <p>
             Choose several files and play them together. MP4, MOV, WebM, and
             other browser-supported formats work here.
           </p>
-          <button className="primary-button">Choose video files</button>
+          <button className="primary-button">
+            <VideoPlusIcon />
+            Choose video files
+          </button>
         </section>
       ) : (
         <>
@@ -581,7 +694,7 @@ export default function Home() {
                           aria-label={`Remove ${item.name}`}
                           title="Remove video"
                         >
-                          ×
+                          <CloseIcon />
                         </button>
                         {(item.muted || (soloActive && !item.solo)) && (
                           <span className="muted-badge">Muted</span>
@@ -634,7 +747,7 @@ export default function Home() {
                             aria-label={`Shrink ${item.name}`}
                             title="Shrink width and height by half"
                           >
-                            −
+                            <MinusIcon />
                           </button>
                           <strong>{item.scale}×</strong>
                           <button
@@ -650,7 +763,7 @@ export default function Home() {
                             aria-label={`Enlarge ${item.name}`}
                             title="Double width and height"
                           >
-                            ＋
+                            <PlusIcon />
                           </button>
                         </div>
                         <div className="track-controls">
@@ -661,7 +774,10 @@ export default function Home() {
                             }
                             aria-label={item.muted ? "Unmute" : "Mute"}
                           >
-                            {item.muted ? "×" : "◖"}
+                            <VolumeIcon
+                              muted={item.muted}
+                              level={item.volume}
+                            />
                           </button>
                           <input
                             aria-label={`${item.name} volume`}
@@ -690,7 +806,7 @@ export default function Home() {
               className="add-card"
               onClick={() => fileInputRef.current?.click()}
             >
-              <span>＋</span>
+              <PlusIcon />
               Add more videos
             </button>
           </section>
