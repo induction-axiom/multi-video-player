@@ -1,0 +1,281 @@
+{
+  "schemaVersion": 2,
+  "collection": {
+    "id": "scenic-nature-layout-fixtures",
+    "title": "Scenic nature layout fixtures",
+    "theme": "Real-world nature footage with recorded ambient sound",
+    "basePath": "/test-videos/",
+    "notes": "The five bundled clips are short H.264/AAC test derivatives selected for visual quality, varied aspect ratios, and useful audio. Source objects describe the original downloadable media."
+  },
+  "assets": [
+    {
+      "id": "robin-singing-16x9",
+      "label": "Robin singing",
+      "description": "A close-up European robin singing among sunlit leaves.",
+      "path": "/test-videos/robin-singing-16x9.mp4",
+      "bundled": {
+        "mimeType": "video/mp4",
+        "video": {
+          "codec": "h264",
+          "width": 1280,
+          "height": 720,
+          "aspectRatio": "16:9",
+          "frameRate": 24,
+          "pixelFormat": "yuv420p"
+        },
+        "audio": {
+          "codec": "aac",
+          "sampleRateHz": 48000,
+          "channels": 2,
+          "channelLayout": "stereo",
+          "bitRate": 128008,
+          "meanVolumeDb": -21.2,
+          "maxVolumeDb": -0.9
+        },
+        "durationSeconds": 12,
+        "sizeBytes": 2205765,
+        "sha256": "1560134da5d0d7953836e50514331a61bbb84425b5268884629bdda5f7360d79"
+      },
+      "source": {
+        "title": "Robin Singing video.webm",
+        "creator": "gails_pictures (Flickr)",
+        "pageUrl": "https://commons.wikimedia.org/wiki/File:Robin_Singing_video.webm",
+        "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Robin_Singing_video.webm",
+        "license": {
+          "name": "CC BY 2.0",
+          "url": "https://creativecommons.org/licenses/by/2.0/"
+        },
+        "width": 1920,
+        "height": 1080,
+        "aspectRatio": "16:9",
+        "durationSeconds": 13.007,
+        "sizeBytes": 7693991,
+        "hasAudio": true
+      },
+      "modifications": [
+        "Kept seconds 0.5 through 12.5",
+        "Resized from 1920x1080 to 1280x720",
+        "Converted to H.264/AAC MP4 at 24 fps with 48 kHz stereo audio",
+        "Added 80 ms audio fades at the edit boundaries"
+      ],
+      "attribution": "Robin Singing by gails_pictures, CC BY 2.0; trimmed, resized, and transcoded."
+    },
+    {
+      "id": "waterfall-9x16",
+      "label": "Geroldsau waterfall",
+      "description": "A portrait crop of the Geroldsau waterfall flowing through a mossy forest.",
+      "path": "/test-videos/waterfall-9x16.mp4",
+      "bundled": {
+        "mimeType": "video/mp4",
+        "video": {
+          "codec": "h264",
+          "width": 540,
+          "height": 960,
+          "aspectRatio": "9:16",
+          "frameRate": 24,
+          "pixelFormat": "yuv420p"
+        },
+        "audio": {
+          "codec": "aac",
+          "sampleRateHz": 48000,
+          "channels": 2,
+          "channelLayout": "stereo",
+          "bitRate": 128085,
+          "meanVolumeDb": -30.7,
+          "maxVolumeDb": -16.5
+        },
+        "durationSeconds": 10,
+        "sizeBytes": 3693682,
+        "sha256": "b775c0c3373944c7ababa0022725a2c2cfd7a781f22ffd8d492bb002bbbf7e31"
+      },
+      "source": {
+        "title": "Geroldsauer Wasserfall 2020-03-13.webm",
+        "creator": "Leonhard Lenz",
+        "pageUrl": "https://commons.wikimedia.org/wiki/File:Geroldsauer_Wasserfall_2020-03-13.webm",
+        "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/d/da/Geroldsauer_Wasserfall_2020-03-13.webm",
+        "license": {
+          "name": "CC0 1.0 Universal",
+          "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+        },
+        "width": 3840,
+        "height": 2160,
+        "aspectRatio": "16:9",
+        "durationSeconds": 101.609,
+        "sizeBytes": 1759562034,
+        "hasAudio": true
+      },
+      "modifications": [
+        "Used Wikimedia Commons' official 1080p VP9/Opus transcode as the working copy",
+        "Kept seconds 20 through 30",
+        "Cropped around the waterfall and resized to 540x960",
+        "Converted to H.264/AAC MP4 at 24 fps with 48 kHz stereo audio",
+        "Added 80 ms audio fades at the edit boundaries"
+      ],
+      "attribution": "Geroldsau Waterfall by Leonhard Lenz, CC0 1.0."
+    },
+    {
+      "id": "beech-forest-square",
+      "label": "Beech forest",
+      "description": "A square view moving through the green canopy of a Ukrainian beech forest.",
+      "path": "/test-videos/beech-forest-square.mp4",
+      "bundled": {
+        "mimeType": "video/mp4",
+        "video": {
+          "codec": "h264",
+          "width": 720,
+          "height": 720,
+          "aspectRatio": "1:1",
+          "frameRate": 24,
+          "pixelFormat": "yuv420p"
+        },
+        "audio": {
+          "codec": "aac",
+          "sampleRateHz": 48000,
+          "channels": 2,
+          "channelLayout": "stereo",
+          "bitRate": 127924,
+          "meanVolumeDb": -36.5,
+          "maxVolumeDb": -19.5
+        },
+        "durationSeconds": 11,
+        "sizeBytes": 2710460,
+        "sha256": "50c9ac32748617b2952e3dab77eb0b73ee87f3c48c21d1d479b06e5cba3077aa"
+      },
+      "source": {
+        "title": "Буковий ліс.webm",
+        "creator": "Сергій Ковальов",
+        "pageUrl": "https://commons.wikimedia.org/wiki/File:%D0%91%D1%83%D0%BA%D0%BE%D0%B2%D0%B8%D0%B9_%D0%BB%D1%96%D1%81.webm",
+        "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6d/%D0%91%D1%83%D0%BA%D0%BE%D0%B2%D0%B8%D0%B9_%D0%BB%D1%96%D1%81.webm",
+        "license": {
+          "name": "CC BY-SA 4.0",
+          "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+        },
+        "width": 1920,
+        "height": 1012,
+        "aspectRatio": "480:253",
+        "durationSeconds": 36.84,
+        "sizeBytes": 94085563,
+        "hasAudio": true
+      },
+      "modifications": [
+        "Used Wikimedia Commons' official 1080p VP9/Opus transcode as the working copy",
+        "Kept seconds 10 through 21",
+        "Center-cropped to a square and resized to 720x720",
+        "Converted to H.264/AAC MP4 at 24 fps with 48 kHz stereo audio",
+        "Raised the quiet forest ambience by 9 dB for playback testing",
+        "Added 80 ms audio fades at the edit boundaries"
+      ],
+      "attribution": "Beech Forest by Сергій Ковальов, CC BY-SA 4.0; trimmed, cropped, transcoded, and ambient audio raised by 9 dB."
+    },
+    {
+      "id": "ocean-waves-4x3",
+      "label": "Mesa del Mar waves",
+      "description": "Turquoise Atlantic waves rolling into a natural pool in Tenerife.",
+      "path": "/test-videos/ocean-waves-4x3.mp4",
+      "bundled": {
+        "mimeType": "video/mp4",
+        "video": {
+          "codec": "h264",
+          "width": 960,
+          "height": 720,
+          "aspectRatio": "4:3",
+          "frameRate": 24,
+          "pixelFormat": "yuv420p"
+        },
+        "audio": {
+          "codec": "aac",
+          "sampleRateHz": 48000,
+          "channels": 2,
+          "channelLayout": "stereo",
+          "bitRate": 127665,
+          "meanVolumeDb": -27.1,
+          "maxVolumeDb": -4.2
+        },
+        "durationSeconds": 9,
+        "sizeBytes": 1983893,
+        "sha256": "f3befa00dfc2a898b67e7673e6fe25d710818f1f9d0e18346ec0977d94137fe0"
+      },
+      "source": {
+        "title": "Mesa del Mar waves 2.webm",
+        "creator": "Mike Peel",
+        "pageUrl": "https://commons.wikimedia.org/wiki/File:Mesa_del_Mar_waves_2.webm",
+        "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/9/91/Mesa_del_Mar_waves_2.webm",
+        "license": {
+          "name": "CC BY-SA 4.0",
+          "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+        },
+        "width": 1920,
+        "height": 1080,
+        "aspectRatio": "16:9",
+        "durationSeconds": 28.814,
+        "sizeBytes": 29641495,
+        "hasAudio": true
+      },
+      "modifications": [
+        "Used Wikimedia Commons' official 1080p VP9/Opus transcode as the working copy",
+        "Kept seconds 4 through 13",
+        "Center-cropped to 4:3 and resized to 960x720",
+        "Converted to H.264/AAC MP4 at 24 fps with 48 kHz stereo audio",
+        "Added 80 ms audio fades at the edit boundaries"
+      ],
+      "attribution": "Mesa del Mar waves by Mike Peel, CC BY-SA 4.0; trimmed, cropped, and transcoded."
+    },
+    {
+      "id": "clackamas-river-20x9",
+      "label": "Clackamas river",
+      "description": "A cinematic wide crop of a shaded waterfall on the South Fork Clackamas River.",
+      "path": "/test-videos/clackamas-river-20x9.mp4",
+      "bundled": {
+        "mimeType": "video/mp4",
+        "video": {
+          "codec": "h264",
+          "width": 1280,
+          "height": 576,
+          "aspectRatio": "20:9",
+          "frameRate": 24,
+          "pixelFormat": "yuv420p"
+        },
+        "audio": {
+          "codec": "aac",
+          "sampleRateHz": 48000,
+          "channels": 2,
+          "channelLayout": "stereo",
+          "bitRate": 128076,
+          "meanVolumeDb": -34.4,
+          "maxVolumeDb": -20.9
+        },
+        "durationSeconds": 10,
+        "sizeBytes": 1870005,
+        "sha256": "bdd136cf7db2f6b18b950faebc2e7f23cfde02fda828d647b9d02beb835b71c5"
+      },
+      "source": {
+        "title": "South Fork Clackamas Wild and Scenic River (27954935884).webm",
+        "creator": "BLM Oregon & Washington",
+        "pageUrl": "https://commons.wikimedia.org/wiki/File:South_Fork_Clackamas_Wild_and_Scenic_River_(27954935884).webm",
+        "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/2/23/South_Fork_Clackamas_Wild_and_Scenic_River_%2827954935884%29.webm",
+        "license": {
+          "name": "Public domain in the United States (U.S. Bureau of Land Management work)",
+          "url": "https://commons.wikimedia.org/wiki/Template:PD-USGov-BLM",
+          "alternate": {
+            "name": "CC BY 2.0",
+            "url": "https://creativecommons.org/licenses/by/2.0/"
+          }
+        },
+        "width": 1920,
+        "height": 1080,
+        "aspectRatio": "16:9",
+        "durationSeconds": 18.811,
+        "sizeBytes": 14513955,
+        "hasAudio": true
+      },
+      "modifications": [
+        "Kept seconds 2 through 12",
+        "Cropped to 20:9 and resized to 1280x576",
+        "Converted to H.264/AAC MP4 at 24 fps with 48 kHz stereo audio",
+        "Raised the quiet river ambience by 18 dB for playback testing",
+        "Added 80 ms audio fades at the edit boundaries"
+      ],
+      "attribution": "South Fork Clackamas Wild and Scenic River by BLM Oregon & Washington; U.S. public-domain federal work, also offered under CC BY 2.0; trimmed, cropped, transcoded, and ambient audio raised by 18 dB."
+    }
+  ]
+}
