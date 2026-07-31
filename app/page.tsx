@@ -722,9 +722,17 @@ export default function Home() {
           >
             {layoutRows.map((row) => (
               <div
-                className="video-row"
+                className={`video-row ${row.positioned ? "is-positioned" : ""}`}
                 key={row.id}
-                style={{ minHeight: row.height }}
+                style={
+                  row.positioned
+                    ? {
+                        width: row.width,
+                        height: row.height,
+                        minHeight: row.height,
+                      }
+                    : { minHeight: row.height }
+                }
               >
                 {row.tiles.map((tile) => {
                   const item = itemMap.get(tile.id);
@@ -736,7 +744,11 @@ export default function Home() {
                     <article
                       className={`video-card ${item.solo ? "is-solo" : ""}`}
                       key={item.id}
-                      style={{ width: tile.width }}
+                      style={{
+                        width: tile.width,
+                        left: row.positioned ? tile.x : undefined,
+                        top: row.positioned ? tile.y : undefined,
+                      }}
                     >
                       <div className="video-stage" style={{ height: tile.height }}>
                         <video

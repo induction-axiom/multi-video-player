@@ -483,6 +483,15 @@ input[type="range"] {
   gap: 4px;
 }
 
+.video-row.is-positioned {
+  position: relative;
+  display: block;
+}
+
+.video-row.is-positioned .video-card {
+  position: absolute;
+}
+
 .video-card {
   flex: 0 0 auto;
   min-width: 0;

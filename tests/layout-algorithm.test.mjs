@@ -63,6 +63,40 @@ test("sample layouts are deterministic, bounded, and preserve aspect ratios", ()
               sourceVideo.width / sourceVideo.height,
           ) < 1e-9,
         );
+        if (row.positioned) {
+          assert.ok((tile.x ?? -1) >= -0.001);
+          assert.ok((tile.y ?? -1) >= -0.001);
+          assert.ok((tile.x ?? 0) + tile.width <= row.width + 0.001);
+          assert.ok((tile.y ?? 0) + tile.height <= row.height + 0.001);
+        }
+      }
+      if (row.positioned) {
+        for (let firstIndex = 0; firstIndex < row.tiles.length; firstIndex++) {
+          for (
+            let secondIndex = firstIndex + 1;
+            secondIndex < row.tiles.length;
+            secondIndex++
+          ) {
+            const firstTile = row.tiles[firstIndex];
+            const secondTile = row.tiles[secondIndex];
+            const overlapWidth =
+              Math.min(
+                (firstTile.x ?? 0) + firstTile.width,
+                (secondTile.x ?? 0) + secondTile.width,
+              ) -
+              Math.max(firstTile.x ?? 0, secondTile.x ?? 0);
+            const overlapHeight =
+              Math.min(
+                (firstTile.y ?? 0) + firstTile.height,
+                (secondTile.y ?? 0) + secondTile.height,
+              ) -
+              Math.max(firstTile.y ?? 0, secondTile.y ?? 0);
+            assert.ok(
+              overlapWidth <= 0.001 || overlapHeight <= 0.001,
+              `${testCase.name} overlaps ${firstTile.id} and ${secondTile.id}`,
+            );
+          }
+        }
       }
     }
   }
@@ -127,6 +161,52 @@ test("per-video scale changes both dimensions without cropping", () => {
   );
   assert.ok(rows[0].width <= 2800.001);
   assert.ok(rows[0].height <= 400.001);
+});
+
+test("fullscreen can group non-adjacent videos while the editor keeps source order", () => {
+  const videos = [
+    { id: "portrait-a", width: 750, height: 1000 },
+    { id: "landscape-a", width: 1500, height: 1000 },
+    { id: "portrait-b", width: 750, height: 1000 },
+    { id: "landscape-b", width: 1333, height: 1000 },
+  ];
+  const sourceOrder = videos.map((video) => video.id);
+  const fullscreenRows = computeVideoLayout(videos, 1920, 1080, true);
+  const editorRows = computeVideoLayout(videos, 1920, 1080, false);
+  const fullscreenOrder = fullscreenRows.flatMap((row) =>
+    row.tiles.map((tile) => tile.id),
+  );
+  const editorOrder = editorRows.flatMap((row) =>
+    row.tiles.map((tile) => tile.id),
+  );
+
+  assert.notDeepEqual(fullscreenOrder, sourceOrder);
+  assert.deepEqual(editorOrder, sourceOrder);
+  assert.equal(fullscreenRows.length, 1);
+  assert.equal(fullscreenRows[0].positioned, true);
+});
+
+test("fullscreen can mix horizontal and vertical recursive cuts", () => {
+  const videos = [
+    { id: "A", width: 960, height: 1080, scale: 1 },
+    { id: "B", width: 1920, height: 1080, scale: 1 },
+    { id: "C", width: 1920, height: 1080, scale: 1 },
+  ];
+  const [canvas] = computeVideoLayout(videos, 1920, 1080, true);
+  const tiles = new Map(canvas.tiles.map((tile) => [tile.id, tile]));
+  const a = tiles.get("A");
+  const b = tiles.get("B");
+  const c = tiles.get("C");
+
+  assert.equal(canvas.positioned, true);
+  assert.ok(a);
+  assert.ok(b);
+  assert.ok(c);
+  assert.ok((a.x ?? 0) < (b.x ?? 0));
+  assert.ok(Math.abs((b.x ?? 0) - (c.x ?? 0)) < 0.001);
+  assert.ok((b.y ?? 0) < (c.y ?? 0));
+  assert.ok(Math.abs(a.height - (b.height + c.height)) < 4.001);
+  assert.ok(videoArea([canvas]) / (1920 * 1080) > 0.99);
 });
 
 test("editor layouts keep every control card above its minimum width", () => {
