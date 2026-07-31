@@ -5,7 +5,7 @@ account is needed.
 
 [Try Multi Video Player in your browser](https://induction-axiom.github.io/multi-video-player/)
 
-![Several local videos playing together](docs/screenshots/player.png)
+![Multi Video Player feature overview](docs/screenshots/demo.gif)
 
 Drop in any mix of landscape, portrait, square, or ultrawide clips. The player
 keeps them in sync, loops shorter clips, and fits every frame without cropping.
