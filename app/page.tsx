@@ -12,6 +12,10 @@ import {
   useState,
 } from "react";
 import { computeVideoLayout } from "../algorithm/video-layout";
+import {
+  mediaTimeAtTimeline,
+  planVideoSynchronization,
+} from "../algorithm/video-sync";
 
 type Loudness = {
   rmsDb: number;
@@ -223,6 +227,30 @@ const PlaybackTimeline = ({
   );
 };
 
+const canSynchronize = (video: HTMLVideoElement) =>
+  Number.isFinite(video.duration) && video.duration > 0;
+
+const seekVideoToTimeline = (video: HTMLVideoElement, timelineTime: number) => {
+  if (!canSynchronize(video)) return;
+  video.playbackRate = 1;
+  video.currentTime = mediaTimeAtTimeline(timelineTime, video.duration);
+};
+
+const correctVideoDrift = (video: HTMLVideoElement, timelineTime: number) => {
+  if (!canSynchronize(video)) return;
+  const decision = planVideoSynchronization(
+    timelineTime,
+    video.currentTime,
+    video.duration,
+  );
+  if (decision.type === "seek") {
+    video.playbackRate = 1;
+    video.currentTime = decision.mediaTime;
+    return;
+  }
+  video.playbackRate = decision.playbackRate;
+};
+
 export default function Home() {
   const [items, setItems] = useState<VideoItem[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -265,19 +293,17 @@ export default function Home() {
     [items],
   );
 
-  const syncVideos = useCallback(
-    (time: number, force = false) => {
-      for (const item of items) {
-        const video = videoRefs.current.get(item.id);
-        if (!video || !Number.isFinite(video.duration) || video.duration <= 0) continue;
-        const expected = time % video.duration;
-        if (force || Math.abs(video.currentTime - expected) > 0.24) {
-          video.currentTime = expected;
-        }
-      }
-    },
-    [items],
-  );
+  const seekVideosToTimeline = useCallback((time: number) => {
+    for (const video of videoRefs.current.values()) {
+      seekVideoToTimeline(video, time);
+    }
+  }, []);
+
+  const correctVideoDriftFromTimeline = useCallback((time: number) => {
+    for (const video of videoRefs.current.values()) {
+      correctVideoDrift(video, time);
+    }
+  }, []);
 
   useEffect(() => {
     if (!resizeNotice) return;
@@ -299,12 +325,7 @@ export default function Home() {
 
     const time = currentTimeRef.current;
     for (const video of videoRefs.current.values()) {
-      if (Number.isFinite(video.duration) && video.duration > 0) {
-        const expected = time % video.duration;
-        if (Math.abs(video.currentTime - expected) > 0.24) {
-          video.currentTime = expected;
-        }
-      }
+      correctVideoDrift(video, time);
       void video.play().catch(() => {
         // A later user playback action can recover if the browser blocks play().
       });
@@ -352,9 +373,9 @@ export default function Home() {
       if (nextTime >= maxDuration) {
         nextTime %= maxDuration;
         clockStartRef.current = now - nextTime * 1000;
-        syncVideos(nextTime, true);
+        seekVideosToTimeline(nextTime);
       } else if (now - lastSync > 1000) {
-        syncVideos(nextTime);
+        correctVideoDriftFromTimeline(nextTime);
         lastSync = now;
       }
       currentTimeRef.current = nextTime;
@@ -363,7 +384,12 @@ export default function Home() {
 
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [isPlaying, maxDuration, syncVideos]);
+  }, [
+    correctVideoDriftFromTimeline,
+    isPlaying,
+    maxDuration,
+    seekVideosToTimeline,
+  ]);
 
   useEffect(
     () => () => {
@@ -426,13 +452,13 @@ export default function Home() {
       return;
     }
 
-    syncVideos(currentTimeRef.current, true);
+    seekVideosToTimeline(currentTimeRef.current);
     clockStartRef.current = performance.now() - currentTimeRef.current * 1000;
     await Promise.allSettled(
       Array.from(videoRefs.current.values()).map((video) => video.play()),
     );
     setIsPlaying(true);
-  }, [isPlaying, items.length, syncVideos]);
+  }, [isPlaying, items.length, seekVideosToTimeline]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -454,7 +480,7 @@ export default function Home() {
     const nextTime = Math.max(0, Math.min(time, maxDuration));
     currentTimeRef.current = nextTime;
     clockStartRef.current = performance.now() - nextTime * 1000;
-    syncVideos(nextTime, true);
+    seekVideosToTimeline(nextTime);
   };
 
   const updateItem = (id: string, patch: Partial<VideoItem>) => {
