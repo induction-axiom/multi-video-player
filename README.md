@@ -3,6 +3,8 @@
 Play local videos side by side on one timeline. Nothing is uploaded and no
 account is needed.
 
+[Try Multi Video Player in your browser](https://induction-axiom.github.io/multi-video-player/)
+
 ![Several local videos playing together](docs/screenshots/player.png)
 
 Drop in any mix of landscape, portrait, square, or ultrawide clips. The player
@@ -35,6 +37,13 @@ npm run dev
 
 Open the local address printed in the terminal, then drop in your videos.
 Format support depends on the browser; MP4, MOV, and WebM usually work.
+
+## Online version
+
+The hosted player runs entirely in your browser. Selected videos stay on your
+device and are not uploaded:
+
+<https://induction-axiom.github.io/multi-video-player/>
 
 ## Development
 
