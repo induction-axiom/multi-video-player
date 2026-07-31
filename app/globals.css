@@ -303,6 +303,33 @@ input[type="range"] {
   animation: pulse 1s infinite;
 }
 
+.resize-notice {
+  position: fixed;
+  z-index: 50;
+  left: 50%;
+  bottom: 24px;
+  max-width: min(520px, calc(100vw - 28px));
+  padding: 11px 15px;
+  border: 1px solid rgba(215, 255, 63, 0.35);
+  border-radius: 12px;
+  background: rgba(29, 35, 32, 0.96);
+  color: var(--ink);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+  transform: translateX(-50%);
+  backdrop-filter: blur(16px);
+  animation: notice-in 140ms ease-out;
+}
+
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+}
+
 @keyframes pulse {
   50% {
     opacity: 0.25;
@@ -629,7 +656,7 @@ input[type="range"] {
 }
 
 .size-controls strong {
-  width: 27px;
+  width: 48px;
   color: #c7d0cb;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 10px;

@@ -35,7 +35,12 @@ type VideoItem = {
   loudness?: Loudness;
 };
 
-const VIDEO_LAYOUT_OPTIONS = { minimumTileWidth: 220 };
+type ResizeNotice = {
+  message: string;
+};
+
+const MINIMUM_TILE_WIDTH = 180;
+const VIDEO_LAYOUT_OPTIONS = { minimumTileWidth: MINIMUM_TILE_WIDTH };
 const TILE_RESIZE_EPSILON = 0.5;
 
 const formatTime = (seconds: number) => {
@@ -162,6 +167,7 @@ export default function Home() {
   const [balanceProgress, setBalanceProgress] = useState("");
   const [isGridFullscreen, setIsGridFullscreen] = useState(false);
   const [gridSize, setGridSize] = useState({ width: 0, height: 0 });
+  const [resizeNotice, setResizeNotice] = useState<ResizeNotice | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef(new Map<string, HTMLVideoElement>());
@@ -211,6 +217,12 @@ export default function Home() {
   useEffect(() => {
     currentTimeRef.current = currentTime;
   }, [currentTime]);
+
+  useEffect(() => {
+    if (!resizeNotice) return;
+    const timeout = window.setTimeout(() => setResizeNotice(null), 2600);
+    return () => window.clearTimeout(timeout);
+  }, [resizeNotice]);
 
   useEffect(() => {
     for (const item of items) {
@@ -399,7 +411,10 @@ export default function Home() {
     if (!currentTile || !item) return;
 
     const nextScale = item.scale * factor;
-    if (!Number.isFinite(nextScale) || nextScale <= 0) return;
+    if (!Number.isFinite(nextScale) || nextScale <= 0) {
+      setResizeNotice({ message: "The resize limit has been reached." });
+      return;
+    }
 
     const nextItems = items.map((candidate) =>
       candidate.id === id ? { ...candidate, scale: nextScale } : candidate,
@@ -420,7 +435,18 @@ export default function Home() {
       factor < 1
         ? nextTile.width < currentTile.width - TILE_RESIZE_EPSILON
         : nextTile.width > currentTile.width + TILE_RESIZE_EPSILON;
-    if (changesInRequestedDirection) setItems(nextItems);
+    if (changesInRequestedDirection) {
+      setResizeNotice(null);
+      setItems(nextItems);
+      return;
+    }
+
+    setResizeNotice({
+      message:
+        factor < 1
+          ? `Minimum size reached — cards stay at least ${MINIMUM_TILE_WIDTH}px wide so the controls remain usable.`
+          : "Maximum size reached — this video cannot grow past the available layout width.",
+    });
   };
 
   const removeItem = (id: string) => {
@@ -843,6 +869,12 @@ export default function Home() {
         <span>Multi Video Player</span>
         <p>Selected files and settings are cleared when this page closes.</p>
       </footer>
+
+      {resizeNotice && (
+        <div className="resize-notice" role="status" aria-live="polite">
+          {resizeNotice.message}
+        </div>
+      )}
     </main>
   );
 }

@@ -256,6 +256,9 @@ export const computeVideoLayout = (
   const width = Math.max(1, containerWidth);
   const aspects = items.map(safeAspectRatio);
   const scales = items.map(safeScale);
+  const scaleById = new Map(
+    items.map((item, index) => [item.id, scales[index]]),
+  );
   const minimumTileWidth = fullscreen
     ? 0
     : Math.min(width, Math.max(0, options.minimumTileWidth ?? 0));
@@ -349,6 +352,9 @@ export const computeVideoLayout = (
       1,
     );
     return rows.map((row) => {
+      const largestScale = Math.max(
+        ...row.tiles.map((tile) => scaleById.get(tile.id) ?? 1),
+      );
       const minimumRenderedHeight =
         minimumTileWidth <= 0
           ? 0
@@ -360,7 +366,7 @@ export const computeVideoLayout = (
       const cappedHeight = Math.min(
         row.height,
         Math.max(
-          Math.min(targetHeight * 1.28, 520),
+          targetHeight * 1.28 * largestScale,
           minimumRenderedHeight,
         ),
       );

@@ -18,7 +18,8 @@ keeps them in sync, loops shorter clips, and fits every frame without cropping.
 
 - One play button and timeline for every video
 - Automatic layouts for mixed aspect ratios
-- Per-video display sizes that keep halving or doubling until they reach a layout boundary
+- Per-video display sizes that keep halving or doubling between a usable
+  180px control width and the available layout width
 - Per-video volume, mute, solo, and audio balancing
 - Fullscreen video wall
 - Local-only playback

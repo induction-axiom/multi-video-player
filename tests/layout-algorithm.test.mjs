@@ -138,13 +138,13 @@ test("editor layouts keep every control card above its minimum width", () => {
     { id: "portrait", width: 1080, height: 1920, scale: 0.5 },
   ];
   const rows = computeVideoLayout(videos, 1500, 800, false, {
-    minimumTileWidth: 220,
+    minimumTileWidth: 180,
   });
 
   for (const row of rows) {
     assert.ok(row.width <= 1500.001);
     for (const tile of row.tiles) {
-      assert.ok(tile.width >= 219.999, `${tile.id} is only ${tile.width}px wide`);
+      assert.ok(tile.width >= 179.999, `${tile.id} is only ${tile.width}px wide`);
       const source = videos.find((video) => video.id === tile.id);
       assert.ok(source);
       assert.ok(
@@ -153,6 +153,36 @@ test("editor layouts keep every control card above its minimum width", () => {
       );
     }
   }
+});
+
+test("editor scale can span from the control minimum to the available width", () => {
+  const containerWidth = 1500;
+  const options = { minimumTileWidth: 180 };
+  const shrunkenRows = computeVideoLayout(
+    [{ id: "focus", width: 1920, height: 1080, scale: 0.125 }],
+    containerWidth,
+    800,
+    false,
+    options,
+  );
+  const enlargedRows = computeVideoLayout(
+    [{ id: "focus", width: 1920, height: 1080, scale: 2 }],
+    containerWidth,
+    800,
+    false,
+    options,
+  );
+  const shrunken = shrunkenRows
+    .flatMap((row) => row.tiles)
+    .find((tile) => tile.id === "focus");
+  const enlarged = enlargedRows
+    .flatMap((row) => row.tiles)
+    .find((tile) => tile.id === "focus");
+
+  assert.ok(shrunken);
+  assert.ok(enlarged);
+  assert.ok(Math.abs(shrunken.width - 180) < 0.001);
+  assert.ok(Math.abs(enlarged.width - containerWidth) < 0.001);
 });
 
 test("one hundred videos completes in under five seconds", () => {
