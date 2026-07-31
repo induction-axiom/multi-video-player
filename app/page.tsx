@@ -4,6 +4,7 @@ import {
   ChangeEvent,
   DragEvent,
   ReactNode,
+  RefObject,
   useCallback,
   useEffect,
   useMemo,
@@ -42,6 +43,7 @@ type ResizeNotice = {
 const MINIMUM_TILE_WIDTH = 180;
 const VIDEO_LAYOUT_OPTIONS = { minimumTileWidth: MINIMUM_TILE_WIDTH };
 const TILE_RESIZE_EPSILON = 0.5;
+const TIMELINE_REFRESH_INTERVAL_MS = 1000 / 30;
 
 const formatTime = (seconds: number) => {
   if (!Number.isFinite(seconds)) return "00:00";
@@ -157,10 +159,73 @@ const VolumeIcon = ({
   </IconFrame>
 );
 
+type PlaybackTimelineProps = {
+  currentTimeRef: RefObject<number>;
+  duration: number;
+  isPlaying: boolean;
+  onSeek: (time: number) => void;
+};
+
+/**
+ * Projects the high-frequency playback clock into a small, isolated UI subtree.
+ * Native video rendering remains independent from this display refresh rate.
+ */
+const PlaybackTimeline = ({
+  currentTimeRef,
+  duration,
+  isPlaying,
+  onSeek,
+}: PlaybackTimelineProps) => {
+  const [displayTime, setDisplayTime] = useState(0);
+
+  useEffect(() => {
+    setDisplayTime(Math.min(currentTimeRef.current, duration));
+    if (!isPlaying) return;
+
+    let frame = 0;
+    let lastRefresh = 0;
+    const refresh = (now: number) => {
+      if (now - lastRefresh >= TIMELINE_REFRESH_INTERVAL_MS) {
+        setDisplayTime(Math.min(currentTimeRef.current, duration));
+        lastRefresh = now;
+      }
+      frame = requestAnimationFrame(refresh);
+    };
+
+    frame = requestAnimationFrame(refresh);
+    return () => cancelAnimationFrame(frame);
+  }, [currentTimeRef, duration, isPlaying]);
+
+  const seek = (time: number) => {
+    setDisplayTime(time);
+    onSeek(time);
+  };
+
+  return (
+    <div className="timeline-block">
+      <div className="time-readout">
+        <span>{formatTime(displayTime)}</span>
+        <span className="time-divider">/</span>
+        <span>{formatTime(duration)}</span>
+      </div>
+      <input
+        aria-label="Master timeline"
+        className="timeline"
+        type="range"
+        min="0"
+        max={Math.max(0.01, duration)}
+        step="0.05"
+        value={Math.min(displayTime, duration || 0)}
+        onChange={(event) => seek(Number(event.target.value))}
+        disabled={duration <= 0}
+      />
+    </div>
+  );
+};
+
 export default function Home() {
   const [items, setItems] = useState<VideoItem[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
   const [masterVolume, setMasterVolume] = useState(0.9);
   const [isDragging, setIsDragging] = useState(false);
   const [isBalancing, setIsBalancing] = useState(false);
@@ -213,10 +278,6 @@ export default function Home() {
     },
     [items],
   );
-
-  useEffect(() => {
-    currentTimeRef.current = currentTime;
-  }, [currentTime]);
 
   useEffect(() => {
     if (!resizeNotice) return;
@@ -296,7 +357,7 @@ export default function Home() {
         syncVideos(nextTime);
         lastSync = now;
       }
-      setCurrentTime(nextTime);
+      currentTimeRef.current = nextTime;
       frame = requestAnimationFrame(tick);
     };
 
@@ -392,7 +453,6 @@ export default function Home() {
   const seek = (time: number) => {
     const nextTime = Math.max(0, Math.min(time, maxDuration));
     currentTimeRef.current = nextTime;
-    setCurrentTime(nextTime);
     clockStartRef.current = performance.now() - nextTime * 1000;
     syncVideos(nextTime, true);
   };
@@ -468,7 +528,7 @@ export default function Home() {
     }
     videoRefs.current.clear();
     setItems([]);
-    setCurrentTime(0);
+    currentTimeRef.current = 0;
     setIsPlaying(false);
   };
 
@@ -603,24 +663,12 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="timeline-block">
-          <div className="time-readout">
-            <span>{formatTime(currentTime)}</span>
-            <span className="time-divider">/</span>
-            <span>{formatTime(maxDuration)}</span>
-          </div>
-          <input
-            aria-label="Master timeline"
-            className="timeline"
-            type="range"
-            min="0"
-            max={Math.max(0.01, maxDuration)}
-            step="0.05"
-            value={Math.min(currentTime, maxDuration || 0)}
-            onChange={(event) => seek(Number(event.target.value))}
-            disabled={!items.length}
-          />
-        </div>
+        <PlaybackTimeline
+          currentTimeRef={currentTimeRef}
+          duration={maxDuration}
+          isPlaying={isPlaying}
+          onSeek={seek}
+        />
 
         <div className="master-controls">
           <label className="master-volume">
