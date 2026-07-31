@@ -95,6 +95,40 @@ test("known layouts keep black area within useful bounds", () => {
   }
 });
 
+test("per-video scale changes both dimensions without cropping", () => {
+  const videos = [
+    { id: "large", width: 1920, height: 1080, scale: 2 },
+    { id: "normal", width: 1920, height: 1080, scale: 1 },
+    { id: "small", width: 1920, height: 1080, scale: 0.5 },
+  ];
+  const rows = computeVideoLayout(videos, 2800, 400, true);
+  const tiles = rows.flatMap((row) => row.tiles);
+  const large = tiles.find((tile) => tile.id === "large");
+  const normal = tiles.find((tile) => tile.id === "normal");
+  const small = tiles.find((tile) => tile.id === "small");
+
+  assert.ok(large);
+  assert.ok(normal);
+  assert.ok(small);
+  assert.equal(rows.length, 1);
+  assert.ok(Math.abs(large.width / normal.width - 2) < 1e-9);
+  assert.ok(Math.abs(large.height / normal.height - 2) < 1e-9);
+  assert.ok(
+    Math.abs(
+      (large.width * large.height) / (normal.width * normal.height) - 4,
+    ) < 1e-9,
+  );
+  assert.ok(Math.abs(small.width / normal.width - 0.5) < 1e-9);
+  assert.ok(Math.abs(small.height / normal.height - 0.5) < 1e-9);
+  assert.ok(
+    Math.abs(
+      (small.width * small.height) / (normal.width * normal.height) - 0.25,
+    ) < 1e-9,
+  );
+  assert.ok(rows[0].width <= 2800.001);
+  assert.ok(rows[0].height <= 400.001);
+});
+
 test("one hundred videos completes in under five seconds", () => {
   const stressCase = layoutCases.find(
     (testCase) => testCase.name === "random-one-hundred",

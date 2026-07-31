@@ -141,6 +141,7 @@ footer p {
 .master-volume,
 .time-readout,
 .card-title-row,
+.size-controls,
 .track-controls {
   display: flex;
   align-items: center;
@@ -156,6 +157,7 @@ footer p {
 .danger-button,
 .icon-button,
 .solo-button,
+.size-controls button,
 .mute-button,
 .remove-button {
   border: 0;
@@ -413,7 +415,7 @@ input[type="range"] {
 .video-row {
   display: flex;
   flex: 0 0 auto;
-  align-items: stretch;
+  align-items: center;
   justify-content: center;
   gap: 6px;
 }
@@ -514,7 +516,7 @@ input[type="range"] {
 }
 
 .card-details {
-  height: 105px;
+  height: 142px;
   padding: 12px;
 }
 
@@ -541,6 +543,7 @@ input[type="range"] {
 }
 
 .solo-button,
+.size-controls button,
 .mute-button {
   flex: 0 0 auto;
   border: 1px solid var(--line);
@@ -560,6 +563,32 @@ input[type="range"] {
   border-color: var(--acid);
   background: var(--acid);
   color: var(--acid-ink);
+}
+
+.size-controls {
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.size-controls > span {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.size-controls button {
+  width: 27px;
+  height: 25px;
+  border-radius: 7px;
+  font-size: 14px;
+}
+
+.size-controls strong {
+  width: 27px;
+  color: #c7d0cb;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  text-align: center;
 }
 
 .track-controls {

@@ -17,6 +17,8 @@ type Loudness = {
   gainDb: number;
 };
 
+type VideoScale = 0.5 | 1 | 2;
+
 type VideoItem = {
   id: string;
   file: File;
@@ -28,6 +30,7 @@ type VideoItem = {
   volume: number;
   muted: boolean;
   solo: boolean;
+  scale: VideoScale;
   loudness?: Loudness;
 };
 
@@ -188,6 +191,7 @@ export default function Home() {
         volume: 1,
         muted: false,
         solo: false,
+        scale: 1 as VideoScale,
       };
     });
     setItems((existing) => [
@@ -575,6 +579,44 @@ export default function Home() {
                             title="Solo audio"
                           >
                             S
+                          </button>
+                        </div>
+                        <div
+                          className="size-controls"
+                          role="group"
+                          aria-label={`${item.name} display size`}
+                        >
+                          <span>Size</span>
+                          <button
+                            onClick={() =>
+                              updateItem(item.id, {
+                                scale: Math.max(
+                                  0.5,
+                                  item.scale / 2,
+                                ) as VideoScale,
+                              })
+                            }
+                            disabled={item.scale === 0.5}
+                            aria-label={`Shrink ${item.name}`}
+                            title="Shrink width and height by half"
+                          >
+                            −
+                          </button>
+                          <strong>{item.scale}×</strong>
+                          <button
+                            onClick={() =>
+                              updateItem(item.id, {
+                                scale: Math.min(
+                                  2,
+                                  item.scale * 2,
+                                ) as VideoScale,
+                              })
+                            }
+                            disabled={item.scale === 2}
+                            aria-label={`Enlarge ${item.name}`}
+                            title="Double width and height"
+                          >
+                            ＋
                           </button>
                         </div>
                         <div className="track-controls">

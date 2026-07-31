@@ -19,6 +19,7 @@ export type VideoLayoutInput = {
   id: string;
   width: number;
   height: number;
+  scale?: number;
 };
 
 export type VideoLayoutTile = {
@@ -44,8 +45,14 @@ const safeAspectRatio = (item: VideoLayoutInput) => {
   return item.width / item.height;
 };
 
+const safeScale = (item: VideoLayoutInput) => {
+  const scale = item.scale ?? 1;
+  return Number.isFinite(scale) && scale > 0 ? scale : 1;
+};
+
 const rowHeight = (
   aspects: number[],
+  scales: number[],
   start: number,
   end: number,
   width: number,
@@ -53,9 +60,26 @@ const rowHeight = (
 ) => {
   const count = end - start;
   const availableWidth = Math.max(1, width - gap * Math.max(0, count - 1));
-  let aspectSum = 0;
-  for (let index = start; index < end; index++) aspectSum += aspects[index];
-  return availableWidth / Math.max(0.01, aspectSum);
+  let scaledAspectSum = 0;
+  for (let index = start; index < end; index++) {
+    scaledAspectSum += aspects[index] * scales[index];
+  }
+  return availableWidth / Math.max(0.01, scaledAspectSum);
+};
+
+const renderedRowHeight = (
+  aspects: number[],
+  scales: number[],
+  start: number,
+  end: number,
+  width: number,
+  gap: number,
+) => {
+  let largestScale = 0;
+  for (let index = start; index < end; index++) {
+    largestScale = Math.max(largestScale, scales[index]);
+  }
+  return rowHeight(aspects, scales, start, end, width, gap) * largestScale;
 };
 
 /**
@@ -64,6 +88,7 @@ const rowHeight = (
  */
 const partitionRows = (
   aspects: number[],
+  scales: number[],
   rowCount: number,
   width: number,
   gap: number,
@@ -86,7 +111,14 @@ const partitionRows = (
     for (let end = row; end <= count; end++) {
       for (let start = row - 1; start < end; start++) {
         if (!Number.isFinite(costs[row - 1][start])) continue;
-        const height = rowHeight(aspects, start, end, width, gap);
+        const height = renderedRowHeight(
+          aspects,
+          scales,
+          start,
+          end,
+          width,
+          gap,
+        );
         const normalizedError = (height - targetHeight) / Math.max(1, targetHeight);
         const itemsInRow = end - start;
         const balanceError = itemsInRow - count / rowCount;
@@ -117,6 +149,7 @@ const partitionRows = (
 const materializeRows = (
   items: VideoLayoutInput[],
   aspects: number[],
+  scales: number[],
   ranges: RowRange[],
   width: number,
   columnGap: number,
@@ -124,16 +157,27 @@ const materializeRows = (
   heightScale: number,
 ) =>
   ranges.map((range, rowIndex) => {
-    const height =
-      rowHeight(aspects, range.start, range.end, width, columnGap) * heightScale;
+    const baseHeight =
+      rowHeight(
+        aspects,
+        scales,
+        range.start,
+        range.end,
+        width,
+        columnGap,
+      ) * heightScale;
     const tiles = items.slice(range.start, range.end).map((item, index) => ({
       id: item.id,
-      width: aspects[range.start + index] * height,
-      height,
+      width:
+        aspects[range.start + index] *
+        baseHeight *
+        scales[range.start + index],
+      height: baseHeight * scales[range.start + index],
     }));
     const usedWidth =
       tiles.reduce((total, tile) => total + tile.width, 0) +
       columnGap * Math.max(0, tiles.length - 1);
+    const height = Math.max(...tiles.map((tile) => tile.height));
 
     return {
       id: `row-${rowIndex}-${tiles.map((tile) => tile.id).join("-")}`,
@@ -154,6 +198,7 @@ export const computeVideoLayout = (
 
   const width = Math.max(1, containerWidth);
   const aspects = items.map(safeAspectRatio);
+  const scales = items.map(safeScale);
 
   if (!fullscreen) {
     const gap = 6;
@@ -177,14 +222,43 @@ export const computeVideoLayout = (
     const maxRows = Math.min(items.length, estimatedRows + 2);
 
     for (let rowCount = minRows; rowCount <= maxRows; rowCount++) {
-      const ranges = partitionRows(aspects, rowCount, width, gap, targetHeight);
+      const ranges = partitionRows(
+        aspects,
+        scales,
+        rowCount,
+        width,
+        gap,
+        targetHeight,
+      );
       if (!ranges.length) continue;
       const score = ranges.reduce((total, range) => {
-        const height = rowHeight(aspects, range.start, range.end, width, gap);
+        const height = renderedRowHeight(
+          aspects,
+          scales,
+          range.start,
+          range.end,
+          width,
+          gap,
+        );
         const cappedHeight = Math.min(height, targetHeight * 1.28);
         const error = (cappedHeight - targetHeight) / targetHeight;
+        const largestScale = Math.max(
+          ...scales.slice(range.start, range.end),
+        );
+        const baseHeight = cappedHeight / largestScale;
         const unusedWidth =
-          Math.max(0, width - aspects.slice(range.start, range.end).reduce((a, b) => a + b, 0) * cappedHeight);
+          Math.max(
+            0,
+            width -
+              aspects
+                .slice(range.start, range.end)
+                .reduce(
+                  (sum, aspect, index) =>
+                    sum + aspect * scales[range.start + index],
+                  0,
+                ) *
+                baseHeight,
+          );
         return total + error * error + (unusedWidth / width) ** 2 * 0.18;
       }, 0);
       if (score < bestScore) {
@@ -193,7 +267,16 @@ export const computeVideoLayout = (
       }
     }
 
-    const rows = materializeRows(items, aspects, bestRanges, width, gap, gap, 1);
+    const rows = materializeRows(
+      items,
+      aspects,
+      scales,
+      bestRanges,
+      width,
+      gap,
+      gap,
+      1,
+    );
     return rows.map((row) => {
       const cappedHeight = Math.min(row.height, targetHeight * 1.28, 520);
       if (cappedHeight === row.height) return row;
@@ -207,7 +290,7 @@ export const computeVideoLayout = (
         tiles: row.tiles.map((tile) => ({
           ...tile,
           width: tile.width * scale,
-          height: cappedHeight,
+          height: tile.height * scale,
         })),
       };
     });
@@ -250,6 +333,7 @@ export const computeVideoLayout = (
     const targetHeight = availableHeight / rowCount;
     const ranges = partitionRows(
       aspects,
+      scales,
       rowCount,
       width,
       columnGap,
@@ -258,7 +342,14 @@ export const computeVideoLayout = (
     if (!ranges.length) continue;
 
     const naturalHeights = ranges.map((range) =>
-      rowHeight(aspects, range.start, range.end, width, columnGap),
+      renderedRowHeight(
+        aspects,
+        scales,
+        range.start,
+        range.end,
+        width,
+        columnGap,
+      ),
     );
     const heightScale = Math.min(
       1,
@@ -266,11 +357,23 @@ export const computeVideoLayout = (
         Math.max(1, naturalHeights.reduce((total, value) => total + value, 0)),
     );
     const videoArea = ranges.reduce((total, range, index) => {
-      const scaledHeight = naturalHeights[index] * heightScale;
-      const aspectSum = aspects
-        .slice(range.start, range.end)
-        .reduce((sum, value) => sum + value, 0);
-      return total + aspectSum * scaledHeight * scaledHeight;
+      const largestScale = Math.max(
+        ...scales.slice(range.start, range.end),
+      );
+      const scaledBaseHeight =
+        (naturalHeights[index] / largestScale) * heightScale;
+      return (
+        total +
+        aspects
+          .slice(range.start, range.end)
+          .reduce(
+            (sum, aspect, tileIndex) =>
+              sum +
+              aspect *
+                (scaledBaseHeight * scales[range.start + tileIndex]) ** 2,
+            0,
+          )
+      );
     }, 0);
     const score =
       videoArea / (width * height) -
@@ -284,6 +387,7 @@ export const computeVideoLayout = (
   return materializeRows(
     items,
     aspects,
+    scales,
     best?.ranges ?? [{ start: 0, end: items.length }],
     width,
     columnGap,
