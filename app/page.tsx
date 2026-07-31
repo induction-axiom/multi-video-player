@@ -18,7 +18,7 @@ type Loudness = {
   gainDb: number;
 };
 
-type VideoScale = 0.5 | 1 | 2;
+type VideoScale = number;
 
 type VideoItem = {
   id: string;
@@ -35,6 +35,9 @@ type VideoItem = {
   loudness?: Loudness;
 };
 
+const VIDEO_LAYOUT_OPTIONS = { minimumTileWidth: 220 };
+const TILE_RESIZE_EPSILON = 0.5;
+
 const formatTime = (seconds: number) => {
   if (!Number.isFinite(seconds)) return "00:00";
   const rounded = Math.max(0, Math.floor(seconds));
@@ -42,6 +45,9 @@ const formatTime = (seconds: number) => {
   const remainder = rounded % 60;
   return `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
 };
+
+const formatScale = (scale: number) =>
+  Number.parseFloat(scale.toPrecision(6)).toString();
 
 const db = (value: number) => 20 * Math.log10(Math.max(value, 1e-9));
 
@@ -175,7 +181,7 @@ export default function Home() {
         gridSize.width || 1200,
         gridSize.height || 800,
         isGridFullscreen,
-        { minimumTileWidth: 220 },
+        VIDEO_LAYOUT_OPTIONS,
       ),
     [gridSize.height, gridSize.width, isGridFullscreen, items],
   );
@@ -315,7 +321,7 @@ export default function Home() {
         volume: 1,
         muted: false,
         solo: false,
-        scale: 1 as VideoScale,
+        scale: 1,
       };
     });
     setItems((existing) => [
@@ -383,6 +389,38 @@ export default function Home() {
     setItems((existing) =>
       existing.map((item) => (item.id === id ? { ...item, ...patch } : item)),
     );
+  };
+
+  const resizeItem = (id: string, factor: 0.5 | 2) => {
+    const currentTile = layoutRows
+      .flatMap((row) => row.tiles)
+      .find((tile) => tile.id === id);
+    const item = itemMap.get(id);
+    if (!currentTile || !item) return;
+
+    const nextScale = item.scale * factor;
+    if (!Number.isFinite(nextScale) || nextScale <= 0) return;
+
+    const nextItems = items.map((candidate) =>
+      candidate.id === id ? { ...candidate, scale: nextScale } : candidate,
+    );
+    const nextRows = computeVideoLayout(
+      nextItems,
+      gridSize.width || 1200,
+      gridSize.height || 800,
+      isGridFullscreen,
+      VIDEO_LAYOUT_OPTIONS,
+    );
+    const nextTile = nextRows
+      .flatMap((row) => row.tiles)
+      .find((tile) => tile.id === id);
+    if (!nextTile) return;
+
+    const changesInRequestedDirection =
+      factor < 1
+        ? nextTile.width < currentTile.width - TILE_RESIZE_EPSILON
+        : nextTile.width > currentTile.width + TILE_RESIZE_EPSILON;
+    if (changesInRequestedDirection) setItems(nextItems);
   };
 
   const removeItem = (id: string) => {
@@ -739,33 +777,17 @@ export default function Home() {
                         >
                           <span>Size</span>
                           <button
-                            onClick={() =>
-                              updateItem(item.id, {
-                                scale: Math.max(
-                                  0.5,
-                                  item.scale / 2,
-                                ) as VideoScale,
-                              })
-                            }
-                            disabled={item.scale === 0.5}
+                            onClick={() => resizeItem(item.id, 0.5)}
                             aria-label={`Shrink ${item.name}`}
-                            title="Shrink width and height by half"
+                            title="Halve until the tile reaches its minimum size"
                           >
                             <MinusIcon />
                           </button>
-                          <strong>{item.scale}×</strong>
+                          <strong>{formatScale(item.scale)}×</strong>
                           <button
-                            onClick={() =>
-                              updateItem(item.id, {
-                                scale: Math.min(
-                                  2,
-                                  item.scale * 2,
-                                ) as VideoScale,
-                              })
-                            }
-                            disabled={item.scale === 2}
+                            onClick={() => resizeItem(item.id, 2)}
                             aria-label={`Enlarge ${item.name}`}
-                            title="Double width and height"
+                            title="Double until the tile reaches its layout boundary"
                           >
                             <PlusIcon />
                           </button>
