@@ -129,6 +129,32 @@ test("per-video scale changes both dimensions without cropping", () => {
   assert.ok(rows[0].height <= 400.001);
 });
 
+test("editor layouts keep every control card above its minimum width", () => {
+  const videos = [
+    { id: "square", width: 1080, height: 1080, scale: 2 },
+    { id: "classic", width: 1440, height: 1080, scale: 2 },
+    { id: "cinema", width: 2560, height: 1080, scale: 1 },
+    { id: "landscape", width: 1920, height: 1080, scale: 2 },
+    { id: "portrait", width: 1080, height: 1920, scale: 0.5 },
+  ];
+  const rows = computeVideoLayout(videos, 1500, 800, false, {
+    minimumTileWidth: 220,
+  });
+
+  for (const row of rows) {
+    assert.ok(row.width <= 1500.001);
+    for (const tile of row.tiles) {
+      assert.ok(tile.width >= 219.999, `${tile.id} is only ${tile.width}px wide`);
+      const source = videos.find((video) => video.id === tile.id);
+      assert.ok(source);
+      assert.ok(
+        Math.abs(tile.width / tile.height - source.width / source.height) <
+          1e-9,
+      );
+    }
+  }
+});
+
 test("one hundred videos completes in under five seconds", () => {
   const stressCase = layoutCases.find(
     (testCase) => testCase.name === "random-one-hundred",

@@ -175,6 +175,7 @@ export default function Home() {
         gridSize.width || 1200,
         gridSize.height || 800,
         isGridFullscreen,
+        { minimumTileWidth: 220 },
       ),
     [gridSize.height, gridSize.width, isGridFullscreen, items],
   );

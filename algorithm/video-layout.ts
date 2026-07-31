@@ -35,6 +35,10 @@ export type VideoLayoutRow = {
   tiles: VideoLayoutTile[];
 };
 
+export type VideoLayoutOptions = {
+  minimumTileWidth?: number;
+};
+
 type RowRange = {
   start: number;
   end: number;
@@ -81,6 +85,58 @@ const renderedRowHeight = (
   }
   return rowHeight(aspects, scales, start, end, width, gap) * largestScale;
 };
+
+const rangeMeetsMinimumWidth = (
+  aspects: number[],
+  scales: number[],
+  start: number,
+  end: number,
+  width: number,
+  gap: number,
+  minimumTileWidth: number,
+) => {
+  if (minimumTileWidth <= 0) return true;
+  const baseHeight = rowHeight(aspects, scales, start, end, width, gap);
+  for (let index = start; index < end; index++) {
+    if (aspects[index] * baseHeight * scales[index] < minimumTileWidth) {
+      return false;
+    }
+  }
+  return true;
+};
+
+const splitRangesAtMinimumWidth = (
+  ranges: RowRange[],
+  aspects: number[],
+  scales: number[],
+  width: number,
+  gap: number,
+  minimumTileWidth: number,
+) =>
+  ranges.flatMap((range) => {
+    const splitRanges: RowRange[] = [];
+    let start = range.start;
+    while (start < range.end) {
+      let end = start + 1;
+      while (
+        end < range.end &&
+        rangeMeetsMinimumWidth(
+          aspects,
+          scales,
+          start,
+          end + 1,
+          width,
+          gap,
+          minimumTileWidth,
+        )
+      ) {
+        end++;
+      }
+      splitRanges.push({ start, end });
+      start = end;
+    }
+    return splitRanges;
+  });
 
 /**
  * Finds ordered row breaks with dynamic programming. Keeping source order makes
@@ -193,12 +249,16 @@ export const computeVideoLayout = (
   containerWidth: number,
   containerHeight: number,
   fullscreen: boolean,
+  options: VideoLayoutOptions = {},
 ): VideoLayoutRow[] => {
   if (!items.length) return [];
 
   const width = Math.max(1, containerWidth);
   const aspects = items.map(safeAspectRatio);
   const scales = items.map(safeScale);
+  const minimumTileWidth = fullscreen
+    ? 0
+    : Math.min(width, Math.max(0, options.minimumTileWidth ?? 0));
 
   if (!fullscreen) {
     const gap = 6;
@@ -267,18 +327,43 @@ export const computeVideoLayout = (
       }
     }
 
+    const constrainedRanges =
+      minimumTileWidth > 0
+        ? splitRangesAtMinimumWidth(
+            bestRanges,
+            aspects,
+            scales,
+            width,
+            gap,
+            minimumTileWidth,
+          )
+        : bestRanges;
     const rows = materializeRows(
       items,
       aspects,
       scales,
-      bestRanges,
+      constrainedRanges,
       width,
       gap,
       gap,
       1,
     );
     return rows.map((row) => {
-      const cappedHeight = Math.min(row.height, targetHeight * 1.28, 520);
+      const minimumRenderedHeight =
+        minimumTileWidth <= 0
+          ? 0
+          : Math.max(
+              ...row.tiles.map(
+                (tile) => (minimumTileWidth * row.height) / tile.width,
+              ),
+            );
+      const cappedHeight = Math.min(
+        row.height,
+        Math.max(
+          Math.min(targetHeight * 1.28, 520),
+          minimumRenderedHeight,
+        ),
+      );
       if (cappedHeight === row.height) return row;
       const scale = cappedHeight / row.height;
       return {
