@@ -73,8 +73,12 @@ export default function Home() {
         gridSize.width || 1200,
         gridSize.height || 800,
         isGridFullscreen,
-      ),
+    ),
     [gridSize.height, gridSize.width, isGridFullscreen, items],
+  );
+  const layoutStructure = useMemo(
+    () => layoutRows.map((row) => row.id).join("|"),
+    [layoutRows],
   );
   const itemMap = useMemo(
     () => new Map(items.map((item) => [item.id, item])),
@@ -106,7 +110,24 @@ export default function Home() {
       video.volume = Math.min(1, item.volume * masterVolume);
       video.muted = item.muted || (soloActive && !item.solo);
     }
-  }, [items, masterVolume, soloActive]);
+  }, [items, layoutStructure, masterVolume, soloActive]);
+
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const time = currentTimeRef.current;
+    for (const video of videoRefs.current.values()) {
+      if (Number.isFinite(video.duration) && video.duration > 0) {
+        const expected = time % video.duration;
+        if (Math.abs(video.currentTime - expected) > 0.24) {
+          video.currentTime = expected;
+        }
+      }
+      void video.play().catch(() => {
+        // A later user playback action can recover if the browser blocks play().
+      });
+    }
+  }, [isPlaying, layoutStructure]);
 
   useEffect(() => {
     const grid = gridRef.current;
@@ -211,7 +232,7 @@ export default function Home() {
     addFiles(Array.from(event.dataTransfer.files));
   };
 
-  const togglePlayback = async () => {
+  const togglePlayback = useCallback(async () => {
     if (!items.length) {
       fileInputRef.current?.click();
       return;
@@ -229,7 +250,20 @@ export default function Home() {
       Array.from(videoRefs.current.values()).map((video) => video.play()),
     );
     setIsPlaying(true);
-  };
+  }, [isPlaying, items.length, syncVideos]);
+
+  useEffect(() => {
+    if (!isGridFullscreen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code !== "Space" || event.repeat) return;
+      event.preventDefault();
+      void togglePlayback();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isGridFullscreen, togglePlayback]);
 
   const seek = (time: number) => {
     const nextTime = Math.max(0, Math.min(time, maxDuration));
