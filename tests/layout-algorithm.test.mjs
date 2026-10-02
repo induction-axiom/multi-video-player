@@ -108,6 +108,9 @@ test("known layouts keep black area within useful bounds", () => {
     ["four-16x9", 0.01],
     ["nine-16x9", 0.02],
     ["mixed-five", 0.25],
+    ["landscape-thirteen", 0.22],
+    ["mixed-thirteen", 0.15],
+    ["portrait-screen-mixed", 0.35],
   ]);
 
   for (const testCase of layoutCases) {
@@ -163,7 +166,28 @@ test("per-video scale changes both dimensions without cropping", () => {
   assert.ok(rows[0].height <= 400.001);
 });
 
-test("fullscreen can group non-adjacent videos while the editor keeps source order", () => {
+test("source resolution never changes default size or user scale", () => {
+  const videos = [
+    { id: "uhd", width: 3840, height: 2160, scale: 1 },
+    { id: "full-hd", width: 1920, height: 1080, scale: 1 },
+    { id: "uhd-half", width: 3840, height: 2160, scale: 0.5 },
+  ];
+  const [canvas] = computeVideoLayout(videos, 8000, 3000, true);
+  const tiles = new Map(canvas.tiles.map((tile) => [tile.id, tile]));
+  const uhd = tiles.get("uhd");
+  const fullHd = tiles.get("full-hd");
+  const uhdHalf = tiles.get("uhd-half");
+
+  assert.ok(uhd);
+  assert.ok(fullHd);
+  assert.ok(uhdHalf);
+  assert.ok(Math.abs(uhd.width - fullHd.width) < 1e-9);
+  assert.ok(Math.abs(uhd.height - fullHd.height) < 1e-9);
+  assert.ok(Math.abs(uhdHalf.width / fullHd.width - 0.5) < 1e-9);
+  assert.ok(Math.abs(uhdHalf.height / fullHd.height - 0.5) < 1e-9);
+});
+
+test("fullscreen and editor layouts preserve source order", () => {
   const videos = [
     { id: "portrait-a", width: 750, height: 1000 },
     { id: "landscape-a", width: 1500, height: 1000 },
@@ -180,13 +204,13 @@ test("fullscreen can group non-adjacent videos while the editor keeps source ord
     row.tiles.map((tile) => tile.id),
   );
 
-  assert.notDeepEqual(fullscreenOrder, sourceOrder);
+  assert.deepEqual(fullscreenOrder, sourceOrder);
   assert.deepEqual(editorOrder, sourceOrder);
   assert.equal(fullscreenRows.length, 1);
   assert.equal(fullscreenRows[0].positioned, true);
 });
 
-test("fullscreen can mix horizontal and vertical recursive cuts", () => {
+test("fullscreen shares a height across rows or a width across columns", () => {
   const videos = [
     { id: "A", width: 960, height: 1080, scale: 1 },
     { id: "B", width: 1920, height: 1080, scale: 1 },
@@ -202,40 +226,66 @@ test("fullscreen can mix horizontal and vertical recursive cuts", () => {
   assert.ok(a);
   assert.ok(b);
   assert.ok(c);
-  assert.ok((a.x ?? 0) < (b.x ?? 0));
-  assert.ok(Math.abs((b.x ?? 0) - (c.x ?? 0)) < 0.001);
-  assert.ok((b.y ?? 0) < (c.y ?? 0));
-  assert.ok(Math.abs(a.height - (b.height + c.height)) < 4.001);
-  assert.ok(videoArea([canvas]) / (1920 * 1080) > 0.99);
+  assert.ok(
+    (Math.abs(a.height - b.height) < 0.001 && Math.abs(b.height - c.height) < 0.001) ||
+    (Math.abs(a.width - b.width) < 0.001 && Math.abs(b.width - c.width) < 0.001),
+  );
+  assert.ok(Math.abs(a.width / a.height - 960 / 1080) < 1e-9);
+  assert.ok(Math.abs(b.width / b.height - 1920 / 1080) < 1e-9);
+  assert.ok(Math.abs(c.width / c.height - 1920 / 1080) < 1e-9);
 });
 
-test("editor layouts keep every control card above its minimum width", () => {
+test("fullscreen preserves a user scale across separate rows", () => {
   const videos = [
-    { id: "square", width: 1080, height: 1080, scale: 2 },
-    { id: "classic", width: 1440, height: 1080, scale: 2 },
-    { id: "cinema", width: 2560, height: 1080, scale: 1 },
-    { id: "landscape", width: 1920, height: 1080, scale: 2 },
-    { id: "portrait", width: 1080, height: 1920, scale: 0.5 },
+    { id: "small", width: 1920, height: 1080, scale: 0.5 },
+    { id: "normal-a", width: 1920, height: 1080, scale: 1 },
+    { id: "normal-b", width: 1920, height: 1080, scale: 1 },
+  ];
+  const [canvas] = computeVideoLayout(videos, 1920, 1080, true);
+  const tiles = new Map(canvas.tiles.map((tile) => [tile.id, tile]));
+  const small = tiles.get("small");
+  const normalA = tiles.get("normal-a");
+  const normalB = tiles.get("normal-b");
+
+  assert.ok(small);
+  assert.ok(normalA);
+  assert.ok(normalB);
+  assert.ok(Math.abs(small.width / normalA.width - 0.5) < 1e-9);
+  assert.ok(Math.abs(small.height / normalA.height - 0.5) < 1e-9);
+  assert.ok(Math.abs(normalA.width - normalB.width) < 1e-9);
+  assert.ok(Math.abs(normalA.height - normalB.height) < 1e-9);
+});
+
+test("editor preserves user scales across separate rows", () => {
+  const videos = [
+    { id: "small", width: 1920, height: 1080, scale: 0.5 },
+    { id: "normal", width: 1920, height: 1080, scale: 1 },
+    { id: "large", width: 1920, height: 1080, scale: 2 },
   ];
   const rows = computeVideoLayout(videos, 1500, 800, false, {
     minimumTileWidth: 180,
   });
+  const tiles = new Map(
+    rows.flatMap((row) => row.tiles).map((tile) => [tile.id, tile]),
+  );
+  const small = tiles.get("small");
+  const normal = tiles.get("normal");
+  const large = tiles.get("large");
 
+  assert.ok(rows.length > 1);
+  assert.ok(small);
+  assert.ok(normal);
+  assert.ok(large);
+  assert.ok(Math.abs(small.width / normal.width - 0.5) < 1e-9);
+  assert.ok(Math.abs(small.height / normal.height - 0.5) < 1e-9);
+  assert.ok(Math.abs(large.width / normal.width - 2) < 1e-9);
+  assert.ok(Math.abs(large.height / normal.height - 2) < 1e-9);
   for (const row of rows) {
     assert.ok(row.width <= 1500.001);
-    for (const tile of row.tiles) {
-      assert.ok(tile.width >= 179.999, `${tile.id} is only ${tile.width}px wide`);
-      const source = videos.find((video) => video.id === tile.id);
-      assert.ok(source);
-      assert.ok(
-        Math.abs(tile.width / tile.height - source.width / source.height) <
-          1e-9,
-      );
-    }
   }
 });
 
-test("editor scale can span from the control minimum to the available width", () => {
+test("editor bounds the shared default size", () => {
   const containerWidth = 1500;
   const options = { minimumTileWidth: 180 };
   const shrunkenRows = computeVideoLayout(
@@ -262,7 +312,89 @@ test("editor scale can span from the control minimum to the available width", ()
   assert.ok(shrunken);
   assert.ok(enlarged);
   assert.ok(Math.abs(shrunken.width - 180) < 0.001);
-  assert.ok(Math.abs(enlarged.width - containerWidth) < 0.001);
+  assert.ok(Math.abs(enlarged.width - (1920 / 1080) * 420 * 2) < 0.001);
+  assert.ok(enlarged.width <= containerWidth);
+});
+
+test("thirteen matching aspect ratios stay equally sized at any resolution", () => {
+  const testCase = layoutCases.find((entry) => entry.name === "mixed-resolutions-thirteen");
+  for (const fullscreen of [false, true]) {
+    const tiles = computeVideoLayout(testCase.videos, 1920, 1080, fullscreen)
+      .flatMap((row) => row.tiles);
+    assert.equal(tiles.length, 13);
+    for (const tile of tiles) {
+      assert.ok(Math.abs(tile.width - tiles[0].width) < 1e-9);
+      assert.ok(Math.abs(tile.height - tiles[0].height) < 1e-9);
+    }
+  }
+});
+
+test("loading real metadata cannot enlarge a video with the same aspect ratio", () => {
+  const placeholders = Array.from({ length: 13 }, (_, index) => ({
+    id: String(index), width: 16, height: 9,
+  }));
+  const loaded = placeholders.map((video, index) =>
+    index === 0 ? { ...video, width: 1920, height: 1080 } : video,
+  );
+  for (const fullscreen of [false, true]) {
+    assert.deepEqual(
+      computeVideoLayout(loaded, 1920, 1080, fullscreen),
+      computeVideoLayout(placeholders, 1920, 1080, fullscreen),
+    );
+  }
+});
+
+test("mixed shapes and user scales remain visible without overlap across screen shapes", () => {
+  for (const [width, height] of [[1920, 1080], [390, 844], [800, 800], [40, 20]]) {
+    const cases = generateLayoutCases({ samples: 30, videos: 16, width, height, seed: 84 });
+    for (const testCase of cases) {
+      const videos = testCase.videos.map((video, index) => ({
+        ...video,
+        width: video.width * (index % 3 + 1),
+        height: video.height * (index % 3 + 1),
+        scale: [0.5, 1, 2][index % 3],
+      }));
+      const [canvas] = computeVideoLayout(videos, width, height, true);
+      assert.deepEqual(canvas.tiles.map((tile) => tile.id), videos.map((video) => video.id));
+      const baseHeights = canvas.tiles.map((tile, index) => tile.height / videos[index].scale);
+      const baseWidths = canvas.tiles.map((tile, index) => tile.width / videos[index].scale);
+      const uniform = (values) => Math.max(...values) - Math.min(...values) < 1e-6;
+      assert.ok(uniform(baseHeights) || uniform(baseWidths), "an individual row was enlarged");
+      for (let index = 0; index < canvas.tiles.length; index++) {
+        const tile = canvas.tiles[index];
+        assert.ok([tile.x, tile.y, tile.width, tile.height].every(Number.isFinite));
+        assert.ok(tile.width > 0 && tile.height > 0);
+        assert.ok(tile.x >= -0.001 && tile.y >= -0.001);
+        assert.ok(tile.x + tile.width <= width + 0.001);
+        assert.ok(tile.y + tile.height <= height + 0.001);
+        assert.ok(Math.abs(tile.width / tile.height - videos[index].width / videos[index].height) < 1e-9);
+        for (const other of canvas.tiles.slice(index + 1)) {
+          const overlapWidth = Math.min(tile.x + tile.width, other.x + other.width) - Math.max(tile.x, other.x);
+          const overlapHeight = Math.min(tile.y + tile.height, other.y + other.height) - Math.max(tile.y, other.y);
+          assert.ok(overlapWidth <= 0.001 || overlapHeight <= 0.001);
+        }
+      }
+    }
+  }
+});
+
+test("empty and invalid metadata have a finite, bounded fallback", () => {
+  assert.deepEqual(computeVideoLayout([], 1920, 1080, true), []);
+  const videos = [
+    { id: "unknown", width: 0, height: 0, scale: NaN },
+    { id: "invalid", width: Infinity, height: 1080, scale: -2 },
+    { id: "invalid-height", width: 1920, height: Infinity, scale: Infinity },
+  ];
+  const [canvas] = computeVideoLayout(videos, NaN, -100, true);
+  assert.equal(canvas.tiles.length, videos.length);
+  for (const tile of canvas.tiles) {
+    assert.ok([tile.x, tile.y, tile.width, tile.height].every(Number.isFinite));
+    assert.ok(tile.width > 0 && tile.height > 0);
+    assert.ok(tile.x >= 0 && tile.y >= 0);
+    assert.ok(tile.x + tile.width <= canvas.width + 0.001);
+    assert.ok(tile.y + tile.height <= canvas.height + 0.001);
+    assert.ok(Math.abs(tile.width / tile.height - 16 / 9) < 1e-9);
+  }
 });
 
 test("one hundred videos completes in under five seconds", () => {

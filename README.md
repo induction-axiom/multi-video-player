@@ -20,6 +20,9 @@ keeps them in sync, loops shorter clips, and fits every frame without cropping.
 
 - One play button and timeline for every video
 - Automatic layouts for mixed aspect ratios
+- Fullscreen compares rows with a shared video height and columns with a shared
+  video width, then chooses the layout with less unused space. Display sizes
+  depend on aspect ratio and manual scaling, not source resolution.
 - Per-video display sizes that keep halving or doubling between a usable
   180px control width and the available layout width
 - Per-video volume, mute, solo, and audio balancing
@@ -61,6 +64,10 @@ results before and after your change:
 npm run test:layout
 npm run benchmark:fill
 ```
+
+Keep every video visible and preserve its aspect ratio and manual scale before
+optimizing fill. Equal-aspect videos should have equal default sizes, including
+mixed source resolutions. Never enlarge an individual row to fill a gap.
 
 `P05 fill` and `worst fill` should go up; `P95 black` should go down. The
 benchmark generates 5,000 repeatable aspect-ratio combinations by default.

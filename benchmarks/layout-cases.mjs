@@ -54,6 +54,23 @@ export const layoutCases = [
   fromRatios("nine-16x9", repeat(9, 16 / 9)),
   fromRatios("mixed-five", [16 / 9, 9 / 16, 1, 21 / 9, 4 / 3]),
   fromRatios("portrait-twelve", repeat(12, 9 / 16)),
+  fromRatios("landscape-thirteen", repeat(13, 16 / 9)),
+  fromRatios("mixed-thirteen", [
+    16 / 9, 9 / 16, 1, 21 / 9, 4 / 3,
+    16 / 9, 9 / 16, 1, 21 / 9, 4 / 3,
+    16 / 9, 9 / 16, 1,
+  ]),
+  {
+    name: "mixed-resolutions-thirteen",
+    width: 1920,
+    height: 1080,
+    videos: Array.from({ length: 13 }, (_, index) => ({
+      id: `resolution-${index}`,
+      width: index === 0 ? 3840 : 1280,
+      height: index === 0 ? 2160 : 720,
+    })),
+  },
+  fromRatios("portrait-screen-mixed", seededRatios(13, 13), 390, 844),
   fromRatios("random-twenty", seededRatios(20, 20)),
   fromRatios("random-fifty", seededRatios(50, 50)),
   fromRatios("random-one-hundred", seededRatios(100, 100)),

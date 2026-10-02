@@ -517,10 +517,15 @@ export default function Home() {
       .find((tile) => tile.id === id);
     if (!nextTile) return;
 
+    const fallsBelowControlMinimum =
+      !isGridFullscreen &&
+      factor < 1 &&
+      nextTile.width < MINIMUM_TILE_WIDTH - TILE_RESIZE_EPSILON;
     const changesInRequestedDirection =
-      factor < 1
+      !fallsBelowControlMinimum &&
+      (factor < 1
         ? nextTile.width < currentTile.width - TILE_RESIZE_EPSILON
-        : nextTile.width > currentTile.width + TILE_RESIZE_EPSILON;
+        : nextTile.width > currentTile.width + TILE_RESIZE_EPSILON);
     if (changesInRequestedDirection) {
       setResizeNotice(null);
       setItems(nextItems);
